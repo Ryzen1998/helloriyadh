@@ -1,25 +1,33 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { createTheme, CssBaseline, ThemeProvider, Typography } from "@mui/material";
+import { Container } from "@mui/system";
+import "./App.css";
+import Catalog from "./components/catalog/Catalog";
+import Header from "./components/layouts/Header";
+import { useState } from 'react';
 
 function App() {
+ const [darkMode,setDarkMode]=useState(false);
+ const paletteType =darkMode?'dark':'light';
+ const handleThemeChange=()=>{
+  setDarkMode(!darkMode);
+ }
+  const theme =createTheme({
+    palette:{
+      mode:paletteType,
+      background:{
+        default:paletteType==='light'? '#eaeaea': '#121212'
+      }
+    }
+  })
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+    <CssBaseline>
+      <Header handleThemeChange={handleThemeChange} darkMode={darkMode} />
+      <Container>
+      <Catalog />
+      </Container>
+    </CssBaseline>
+    </ThemeProvider>
   );
 }
 
