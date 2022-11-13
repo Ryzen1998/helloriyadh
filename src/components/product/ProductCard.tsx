@@ -1,11 +1,33 @@
-import { ListItem, ListItemAvatar, Avatar, ListItemText, Button, Card, CardActions, CardContent, CardMedia, Typography, CardHeader, colors } from "@mui/material"
+import {Avatar,Button, Card, 
+  CardActions, CardContent, CardMedia, Typography, CardHeader} from "@mui/material"
+
+  import { LoadingButton } from "@mui/lab";
+import { Link } from "react-router-dom";
 import { Product } from '../../models/product/Product';
+import { useState } from 'react';
+import agent from '../../Api/agent';
+import { useAppDispatch } from "../../store/store";
+import { setCart } from "../cart/slice/cartSlice";
 
 interface Props{
 product:Product;
 }
 
 const ProductCard = ({product}:Props) => {
+ const dispatch = useAppDispatch();
+
+ const[loading,setLoading]=useState(false);
+  
+ function handleAdditem(productId:number){
+
+   setLoading(true);
+   agent.Cart.addItem(productId).then(cart=>dispatch(setCart(cart))).catch(error=>console.log(error))
+   .finally(()=>setLoading(false));
+  
+
+
+ }
+
   return (
 <Card>
   <CardHeader avatar={
@@ -23,15 +45,15 @@ const ProductCard = ({product}:Props) => {
 />
 <CardContent>
   <Typography gutterBottom color='secondary' variant="h5">
-   ${(product.price/100).toFixed(2)}
+   ${product.price}
   </Typography>
   <Typography variant="body2" color="text.secondary">
   {product.brand} - {product.type}
   </Typography>
 </CardContent>
 <CardActions>
-  <Button size="small">Add to cart</Button>
-  <Button size="small">View</Button>
+  <LoadingButton loading={loading} onClick={()=>handleAdditem(product.id)} size="small">Add to cart</LoadingButton>
+  <Button component={Link} to={`/catalog/${product.id}`} size="small">View</Button>
 </CardActions>
 </Card>
   )

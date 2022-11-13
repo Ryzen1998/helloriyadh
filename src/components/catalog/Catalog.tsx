@@ -2,6 +2,7 @@ import ProductList from "../product/ProductList";
 import { Product } from "../../models/product/Product";
 import { Button } from "@mui/material";
 import { useState, useEffect } from "react";
+import agent from '../../Api/agent';
 
 
 
@@ -10,9 +11,7 @@ const Catalog = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:21466/api/products/getproducts")
-      .then((response) => response.json())
-      .then((data) => setProducts(data.data));
+   agent.Catalog.list().then(products=>setProducts(products));
   }, []);
 
   return (
