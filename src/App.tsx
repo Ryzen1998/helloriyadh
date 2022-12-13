@@ -3,7 +3,7 @@ import { Container } from "@mui/system";
 import "./App.css";
 import Catalog from "./components/catalog/Catalog";
 import Header from "./components/layouts/Header";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Route, Routes } from "react-router-dom";
 import Home from "./pages/home/Home";
 import About from './pages/about/About';
@@ -12,26 +12,31 @@ import ProductDetails from "./components/product/ProductDetails";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import CartPage from './components/cart/CartPage';
-import { getCookies } from './utils/utils';
-import agent from './Api/agent';
 import CheckoutPage from './components/checkout/CheckoutPage';
 import { useAppDispatch } from "./store/store";
-import { setCart } from "./components/cart/slice/cartSlice";
+import { fetchCartAsync} from "./components/cart/slice/cartSlice";
+import Login from './components/account/Login';
+import Register from './components/account/Register';
+import { fetchCurrentUser } from "./components/account/slice/accountsSlice";
+import PrivateRoute from './components/layouts/PrivateRoute';
 
 function App() {
   const dispatch = useAppDispatch();
   const [loading,setloading]=useState(true);
+  
+  const initApp= useCallback(async ()=>{
+    try {
+      await dispatch(fetchCurrentUser());
+      await dispatch(fetchCartAsync());
+      
+    } catch (error) {
+      console.log(error);
+    }
+  },[dispatch]);
 
 useEffect(()=>{
-  const buyerid = getCookies('buyerId');
-  if(buyerid){
-    agent.Cart.get().then(cart=>dispatch(setCart(cart))).catch(error=>
-      console.log(error)).finally(()=>setloading(false));
-  }else{
-    setloading(false);
-  }
-
-},[dispatch])
+ initApp().then(()=>setloading(false));
+},[initApp])
 
  const [darkMode,setDarkMode]=useState(false);
  const paletteType =darkMode?'dark':'light';
@@ -61,12 +66,18 @@ useEffect(()=>{
       <Container>
         <Routes>
        <Route path='/' element={<Home/>}/>
+       <Route path="/login" element={<Login/>}/>
+       <Route path="/register" element={<Register/>}/>
        <Route path='/catalog' element={<Catalog/>}/>
         <Route path='/catalog/:id' element={<ProductDetails/>}/>
        <Route path='/about' element={<About/>}/>
        <Route path='/Contact' element={<Contact/>}/>
        <Route path="/cart" element={<CartPage/>}/>
-       <Route path="/checkout" element={<CheckoutPage/>}/>
+       <Route path="/checkout" element={
+        <PrivateRoute>
+       <CheckoutPage/>
+       </PrivateRoute>
+       }/>
        </Routes>
       </Container>
     </CssBaseline>

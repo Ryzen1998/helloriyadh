@@ -1,13 +1,42 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { toast } from 'react-toastify';
+import { PaginatedResponse } from '../models/pagination/Pagination';
+import { store } from '../store/store';
+import { Serviceresponse } from '../models/serviceResponse/Serviceresponse';
+import { Message } from '@mui/icons-material';
 
 
 axios.defaults.baseURL='http://localhost:21466/api/';
 axios.defaults.withCredentials=true;
 
 const responseBody=(response:AxiosResponse)=>response.data.data;
+const sleep =()=>new Promise(resolve=>setTimeout(resolve,1000));
 
-axios.interceptors.response.use(response=>{
+const responseObject:Serviceresponse={
+   success:true,
+   responseCode:0,
+   message:''
+}
+
+axios.interceptors.request.use((config):any=>{
+    const token = store.getState().account.user?.token;
+    if(token){
+        config.headers!.Authorization=`Bearer ${token}`
+    }
+    return config;
+});
+axios.interceptors.response.use(async response=>{
+    await sleep();
+    const pagination= response.headers['pagination'];
+    if(pagination){
+        response.data.data = new PaginatedResponse(response.data.data,JSON.parse(pagination));
+        return response;
+    }
+    if(response){
+       responseObject.message = response.data.message;
+       responseObject.success = response.data.success;
+       responseObject.responseCode = response.data.responseCode;
+    }
     return response;
 },(error:AxiosError)=>{
     const  {data,status}:any = error.response;
@@ -15,7 +44,6 @@ axios.interceptors.response.use(response=>{
         case 400:
             if(data.errors){
                 const modelStateErrors:string[]=[];
-
                 for (const key in data.errors) {
                    if(data.errors[key]){
                     modelStateErrors.push(data.errors[key])
@@ -27,7 +55,7 @@ axios.interceptors.response.use(response=>{
             toast.error(data.title)
             break;
             case 401:
-                toast.error(data.title)
+                toast.error(data.title||'unauthorised')
                 break;
                 case 500:
                     toast.error(data.title)
@@ -39,21 +67,29 @@ axios.interceptors.response.use(response=>{
 });
 
 const requests={
-    get:(url:string)=>axios.get(url).then(responseBody),
+    get:(url:string,params?:URLSearchParams)=>axios.get(url,{params}).then(responseBody),
     post:(url:string,body:{})=>axios.post(url,body).then(responseBody),
     put:(url:string,body:{})=>axios.put(url,body).then(responseBody),
     delete:(url:string)=>axios.delete(url).then(responseBody)
 }
 
 const Catalog={
-    list:()=>requests.get('products/getproducts'),
-    details:(id:number)=>requests.get(`products/getproductbyid/${id}`)
+    list:(params:URLSearchParams)=>requests.get('products/getproducts',params),
+    details:(id:number)=>requests.get(`products/getproductbyid/${id}`),
+    fetchFilters:()=>requests.get(`Products/getproductfilters`)
 }
 
 const Cart={
     get:()=>requests.get('cart/getcart'),
     addItem:(productId:number,quantity:number=1)=>requests.post(`cart/addtocart?productId=${productId}&quantity=${quantity}`,{}),
     removeItem:(productId:number,quantity:number=1)=>requests.delete(`cart/deletecart?productId=${productId}&quantity=${quantity}`)
+}
+
+const Account={
+    login:(values:any)=>requests.post('account/login',values),
+    register:(values:any)=>requests.post('account/register',values),
+    currentUser:()=>requests.get('account/currentuser'),
+
 }
 
 const serverDebugger={
@@ -64,6 +100,6 @@ const serverDebugger={
     getValidationError:()=>requests.get('ErrorBroadcast/validationerror'),
 }
 
-const agent = {Catalog,Cart,serverDebugger}
+const agent = {Catalog,Cart,Account,responseObject,serverDebugger}
 
 export default agent;

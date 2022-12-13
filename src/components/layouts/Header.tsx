@@ -1,8 +1,8 @@
 import { ShoppingCart } from "@mui/icons-material";
 import { AppBar, Badge, IconButton, List, ListItem, Switch, Toolbar,Typography,Box} from "@mui/material";
 import { Link, NavLink } from "react-router-dom";
-import { useStoreContext } from "../../context/StoreContext";
 import { useAppSelector } from '../../store/store';
+import SignedInMenu from "./SignedInMenu";
 
 interface Props{
   darkMode:boolean,
@@ -36,6 +36,7 @@ typography:'h6',
 const Header = ({darkMode,handleThemeChange}:Props) => {
 
 const {cart}=useAppSelector(state=>state.cart);
+const {user}=useAppSelector(state=>state.account)
 const itemscount=cart?.cartItems.reduce((sum,item)=>sum+item.quantity,0)
 
   return <AppBar position="static" sx={{mb:4}}>
@@ -65,8 +66,10 @@ const itemscount=cart?.cartItems.reduce((sum,item)=>sum+item.quantity,0)
           <ShoppingCart/>
           </Badge>
         </IconButton>
-
-        <List sx={{display:'flex'}}>
+        {user?(
+          <SignedInMenu/>
+        ):(
+          <List sx={{display:'flex'}}>
           {navLinksR.map((link,index)=>(
             <ListItem component={NavLink} 
             to={link.path}  key={link.path}
@@ -76,6 +79,8 @@ const itemscount=cart?.cartItems.reduce((sum,item)=>sum+item.quantity,0)
             </ListItem>
           ))}
         </List>
+        )}
+    
         </Box>
         </Toolbar>
   </AppBar>;

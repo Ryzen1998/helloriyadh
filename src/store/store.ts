@@ -1,14 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { TypedUseSelectorHook, useDispatch } from 'react-redux';
+import { TypedUseSelectorHook, useDispatch,useSelector } from 'react-redux';
 import { counterSlice } from '../pages/contact/counterSlice';
-import { useSelector } from 'react-redux';
 import { cartSlice } from '../components/cart/slice/cartSlice';
-
+import { catalogSlice } from '../components/catalog/slice/catalogSlice';
+import { accountSlice } from '../components/account/slice/accountsSlice';
 
 export const store=configureStore({
     reducer:{
+        account:accountSlice.reducer,
         counter:counterSlice.reducer,
-        cart:cartSlice.reducer
+        cart:cartSlice.reducer,
+        catalog:catalogSlice.reducer,
     }
 })
 
