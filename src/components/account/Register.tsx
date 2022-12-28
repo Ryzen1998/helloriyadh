@@ -21,7 +21,6 @@ export default function Register() {
              mode:'all'
     });
 
-
   const handleApiResponse=(response:any)=>{
     if(agent.responseObject.success===true && 
       agent.responseObject.message==='Registered')

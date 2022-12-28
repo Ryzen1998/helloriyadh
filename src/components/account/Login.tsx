@@ -10,8 +10,7 @@ import { Paper } from '@mui/material';
 import { Link , useNavigate,useLocation} from 'react-router-dom';
 import { FieldValues, useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
-import { useState } from 'react';
-import { useAppDispatch } from '../../store/store';
+import { useAppDispatch, useAppSelector } from '../../store/store';
 import { signInUser } from './slice/accountsSlice';
 
 
@@ -19,30 +18,27 @@ export default function Login() {
     const history = useNavigate();
     const dispatch =useAppDispatch(); 
     const location = useLocation();
-  const {register,handleSubmit,formState:{isSubmitting,errors,isValid}}=useForm({
+    const user = useAppSelector(state=>state.account.user)
+
+  const {register,handleSubmit,setError,formState:{isSubmitting,errors,isValid}}=useForm({
     mode:'all'
   });
-
-   const errorMessage={
-    email:'Invalid Email',
-    password:'Invalid Password'
-   }
-  const [isSuccess,setIsSuccess]=useState(true)
 
    const submitForm = async(data:FieldValues)=>{
 
     try {
-
-      await dispatch(signInUser(data))
-      history(location.state?.from?.pathname || '/catalog')
-
+      await dispatch(signInUser(data)).then(()=>{
+      if(user!==null){
+        console.log('user')
+        history(location.state?.from?.pathname || '/catalog')
+      }
+      else{
+        setError('userName',{message:'Please enter a valid username'})
+        setError('password',{message:'please enter a valid password'})
+      }});
     } catch (error) {
-
       console.log(error)
-
-    }
-       
-    }
+    }}
 
   return (
       <Container component={Paper} maxWidth="sm"sx={{display:'flex',flexDirection:'column',alignItems:'center',p:4}}>
@@ -59,11 +55,15 @@ export default function Login() {
               required
               fullWidth
               label="Email Address"
-              {...register('userName',{required:'Enter E-mail address'})}
+              {...register('userName',{required:'Enter E-mail address',
+              pattern:{
+                value:/^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i,
+                message:'Enter a valid Email Address'
+              }
+            })}
               autoFocus
-              error={!!errors.email}
-              onChange={()=>setIsSuccess(true)}
-              helperText={isSuccess?'':errorMessage.email}
+              error={!!errors.userName}
+              helperText={errors?.userName?.message?.toString()}
             />
             <TextField
               margin="normal"
@@ -71,10 +71,15 @@ export default function Login() {
               fullWidth
               label="Password"
               type="password"
-              {...register('password',{required:'Invalid password'})}
+              {...register('password',{required:'Invalid password',
+              pattern:{
+                value:/^((?=\S*?[A-Z])(?=\S*?[a-z])(?=\S*?[0-9]).{6,})\S$/,
+                message:'Invalid combination'
+              }
+            })}
+            onPaste={(e)=>e.preventDefault()}
               error={!!errors.password}
-              onChange={()=>setIsSuccess(true)}
-              helperText={isSuccess?'':errorMessage.password}
+              helperText={errors?.password?.message?.toString()}
             />
             <LoadingButton
               type="submit"
